@@ -8,7 +8,10 @@ class Note {
 
 class App {
   constructor() {
-    this.notes = [new Note("abc1", "test title", "test text")];
+    // localStorage.setItem('test', JSON.stringify(['123']));
+    // console.log(JSON.parse(localStorage.getItem('test')));
+    this.notes = JSON.parse(localStorage.getItem('notes')) || [];
+    console.log(this.notes);
     this.selectedNoteId = "";
     this.miniSidebar = true;
 
@@ -24,9 +27,56 @@ class App {
     this.$modalText = document.querySelector("#modal-text");
     this.$closeModalForm = document.querySelector("#modal-btn");
     this.$sidebar = document.querySelector(".sidebar");
+    this.$sidebarActiveItem = document.querySelector(".active-item");
+
+    this.$app = document.querySelector("#app");
+    this.$firebaseAuthContainer = document.querySelector("#firebaseui-auth-container");
+    this.$authUserText = document.querySelector(".auth-user");
+    this.$logoutButton = document.querySelector(".logout");
+
+    this.ui = new firebaseui.auth.AuthUI(auth);
+    this.handleAuth();
 
     this.addEventListeners();
     this.displayNotes();
+  }
+
+  handleAuth () {
+    firebase.auth().onAuthStateChanged((user) => {
+      if(user) {
+        console.log(user);
+        this.$authUserText.innerHTML = user.displayName;
+        this.redirectToApp();
+      } else {
+        this.redirectToAuth();
+      }
+    });
+  }
+
+  handleLogout() {
+    firebase.auth().signOut().then(() => {
+      this.redirectToAuth();
+    }).catch((error) => {
+      console.log("ERROR OCCURED", error);
+    });
+  }
+
+  redirectToApp() {
+    this.$firebaseAuthContainer.style.display = "none";
+    this.$app.style.display = "block";
+  }
+
+  redirectToAuth() {
+    this.$firebaseAuthContainer.style.display = "block";
+    this.$app.style.display = "none";
+
+    this.ui.start('#firebaseui-auth-container', {
+      signInOptions: [
+        // List of OAuth providers supported.
+        firebase.auth.EmailAuthProvider.PROVIDER_ID
+      ],
+      // Other config options...
+    });
   }
 
   addEventListeners() {
@@ -53,6 +103,10 @@ class App {
     })
     this.$sidebar.addEventListener("mouseout", (event) =>{
       this.handleToggleSidebar();
+    })
+
+    this.$logoutButton.addEventListener("click", (event) => {
+      this.handleLogout();
     })
   }
 
@@ -119,7 +173,7 @@ class App {
     if (text != "") {
       const newNote = new Note(cuid(), title, text);
       this.notes = [...this.notes, newNote];
-      this.displayNotes();
+      this.render();
     }
   }
 
@@ -131,7 +185,7 @@ class App {
       }
       return note;
     });
-    this.displayNotes();
+    this.render();
   }
 
   handleMouseOverNote(element) {
@@ -154,12 +208,23 @@ class App {
     if(this.miniSidebar) {
       this.$sidebar.style.width = "250px";
       this.$sidebar.classList.add("sidebar-hover");
+      this.$sidebarActiveItem.classList.add("sidebar-active-item");
       this.miniSidebar = false;
     }else {
       this.$sidebar.style.width = "80px";
       this.$sidebar.classList.remove("sidebar-hover");
+      this.$sidebarActiveItem.classList.remove("sidebar-active-item");
       this.miniSidebar = true;
     }
+  }
+
+  saveNotes() {
+    localStorage.setItem('note', JSON.stringify([this.notes]));
+  }
+
+  render() {
+    this.saveNotes();
+    this.displayNotes();
   }
 
   //  onmouseover="app.handleMouseOverNote(this)" onmouseout="app.handleMouseOutNote(this)"
@@ -168,7 +233,7 @@ class App {
     this.$notes.innerHTML = this.notes.map(
       (note) =>
         `
-        <div class="note" id="${note.id}">
+        <div class="note" id="${note.id}" onmouseover="app.handleMouseOverNote(this)" onmouseout="app.handleMouseOutNote(this)">
           <span class="material-symbols-outlined check-circle">check_circle</span>
           <div class="title">${note.title}</div>
           <div class="text">${note.text}</div>
@@ -205,7 +270,7 @@ class App {
 
   deleteNote(id) {
     this.notes = this.notes.filter((note) => note.id != id);
-    this.displayNotes();
+    this.render();
   }
 }
 

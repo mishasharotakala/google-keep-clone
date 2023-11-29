@@ -7,6 +7,10 @@
   font-family: "Roboto", sans-serif;
 }
 
+#app {
+  display: "none";
+}
+
 /* HOVER EFFECTS  */
 .material-symbols-outlined {
   padding: 10px;
@@ -88,6 +92,22 @@ input:focus {
   margin-left: 10px;
 }
 
+.settings-area {
+  display: flex;
+}
+
+.profile-actions-area {
+  display: flex;
+}
+
+.profile-actions-area .tooltip {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.auth-user {
+  cursor: pointer;
+}
 /* MAIN SECTION STYLES */
 
 /* SIDEBAR  */
