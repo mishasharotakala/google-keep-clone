@@ -14,6 +14,7 @@ class App {
     console.log(this.notes);
     this.selectedNoteId = "";
     this.miniSidebar = true;
+    this.userId = "";
 
     this.$activeForm = document.querySelector(".active-form");
     this.$inactiveForm = document.querySelector(".inactive-form");
@@ -44,7 +45,8 @@ class App {
   handleAuth () {
     firebase.auth().onAuthStateChanged((user) => {
       if(user) {
-        console.log(user);
+        console.log(user.uid);
+        this.userId = user.uid;
         this.$authUserText.innerHTML = user.displayName;
         this.redirectToApp();
       } else {
@@ -71,9 +73,25 @@ class App {
     this.$app.style.display = "none";
 
     this.ui.start('#firebaseui-auth-container', {
+      callbacks: {
+        signInSuccessWithAuthResult: (authResult, redirectUrl) => {
+          // User successfully signed in.
+          // Return type determines whether we continue the redirect automatically
+          // or whether we leave that to developer yo handle
+          this.userId = authResult.uid;
+          this.$authUserText.innerHTML = user.displayName;
+          this.redirectToApp();
+        },
+        uiShown: function() {
+          // The widget is rendered
+          // Hide the loader
+          document.getElementById('loader').style.display = 'none';
+        }
+      },
       signInOptions: [
         // List of OAuth providers supported.
-        firebase.auth.EmailAuthProvider.PROVIDER_ID
+        firebase.auth.EmailAuthProvider.PROVIDER_ID,
+        firebase.auth.GoogleAuthProvider.PROVIDER_ID
       ],
       // Other config options...
     });
@@ -146,12 +164,14 @@ class App {
       this.$modalText.value = $selectedNote.children[2].innerHTML;
       this.$modal.classList.add("open-modal");
     }
+    else {
+      return;
+    }
   }
 
   closeModal(event) {
     const isModalFormClickedOn = this.$modalForm.contains(event.target);
     const isClosedModalBtnClickedOn = this.$closeModalForm.contains(event.target);
-    console.log(isClosedModalBtnClickedOn);
     if((!isModalFormClickedOn || isClosedModalBtnClickedOn) && this.$modal.classList.contains("open-modal")) {
       this.editNote(this.selectedNoteId, {title: this.$modalTitle.value, text: this.$modalText.value});
       this.$modal.classList.remove("open-modal");
@@ -160,7 +180,7 @@ class App {
 
   handleArchiving(event) {
     const $selectedNote = event.target.closest(".note");
-    if($selectedNote && event.closest(".archive")) {
+    if($selectedNote && event.target.closest(".archive")) {
       this.selectedNoteId = $selectedNote.id;
       this.deleteNote(this.selectedNoteId);
     }
@@ -188,8 +208,13 @@ class App {
     this.render();
   }
 
+  deleteNote(id) {
+    this.notes = this.notes.filter((note) => note.id != id);
+    this.render();
+  }
+
   handleMouseOverNote(element) {
-    const $note = document.querySelector("#"+element.id);
+    const $note = document.querySelector("#" + element.id);
     const $checkNote = $note.querySelector(".check-circle");
     const $noteFooter = $note.querySelector(".note-footer");
     $checkNote.style.visibility = "visible";
@@ -219,7 +244,7 @@ class App {
   }
 
   saveNotes() {
-    localStorage.setItem('note', JSON.stringify([this.notes]));
+    // localStorage.setItem('notes', JSON.stringify(this.notes));
   }
 
   render() {
@@ -268,10 +293,6 @@ class App {
     ).join("");
   }
 
-  deleteNote(id) {
-    this.notes = this.notes.filter((note) => note.id != id);
-    this.render();
-  }
 }
 
 const app = new App();

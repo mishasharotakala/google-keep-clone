@@ -229,7 +229,53 @@
       firebase.initializeApp(firebaseConfig);
       
       const auth = firebase.auth();
-      console.log(auth);
+      var db = firebase.firestore();
+      // console.log(db);
+
+      // db.collection("users").add({
+      //   notes: [
+      //     {
+      //       id: "123abc",
+      //       title: "title",
+      //       text: "text"
+      //     }
+      //   ]
+      // })
+      // .then((docRef) => {
+      //   console.log("Document written with ID: ", docRef.id);
+      // })
+      // .catch((error) => {
+      //   console.eror("Error adding document: ", error);
+      // });
+
+      // db.collection("users").doc("actualsignedinuserid").set({
+      //   notes: [
+      //     {
+      //       id: "123abc",
+      //       title: "title",
+      //       text: "text"
+      //     }
+      //   ]
+      // })
+      // .then(() => {
+      //   console.log("Document successfully written!");
+      // })
+      // .catch((error) => {
+      //   console.eror("Error adding document: ", error);
+      // });
+
+      var docRef = db.collection("users").doc("actualsignedinuserid");
+      docRef.get().then((doc) => {
+        if (doc.exists) {
+          console.log("Document data: ", doc.data());
+        }
+        else {
+          console.log("No such document!");
+        }
+      })
+      .catch((error) => {
+        console.eror("Error adding document: ", error);
+      });
     </script>
 
 
